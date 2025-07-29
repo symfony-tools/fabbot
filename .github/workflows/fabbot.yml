@@ -104,7 +104,7 @@ jobs:
         run: |
           # Test method names should not have a return type
           rm -rf b && cp -a a b && cd b
-          find -wholename '**/Tests/**.php' \
+          find -wholename '**/Tests/**.php' -or -wholename '**/tests/**.php' \
             | while read -r FILE; do
               sed -i -E 's/^(    public function test.*): void$/\1/' "$FILE"
             done
@@ -218,7 +218,7 @@ jobs:
 
               // ensure there is a dot at the end of the exception message
               // except for files under Tests/
-              if (false === strpos($argv[1], '/Tests/')) {
+              if (false === stripos($argv[1], '/Tests/')) {
                 $new = preg_replace_callback('{throw new ([^\(]+)\((sprintf\()?(\'|")(.+?)(?<!\\\)(\3)}', function ($match) {
                   if ('UnexpectedTypeException' === $match[1]) {
                     return $match[0];
