@@ -20,31 +20,27 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          path: o
+
+      - name: Prepare code
         env:
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          REPO_OWNER: ${{ github.repository_owner }}
-          REPO_NAME: ${{ github.event.repository.name }}
+          REPO: ${{ github.repository_owner }}/${{ github.event.repository.name }}
+          PR: ${{ github.event.pull_request.number }}
         run: |
-          # Checkout patched files using the REST API and install dependencies concurrently
+          # Install dependencies and select files to check
           pip install codespell &
           composer global require -q friendsofphp/php-cs-fixer seld/jsonlint symfony/yaml &
+
           mkdir a
+          [ -e o/.php-cs-fixer.dist.php ] && cp -a {o,a}/.php-cs-fixer.dist.php
 
-          gh api -H "Accept: application/vnd.github.v3.raw" \
-              "/repos/$REPO_OWNER/$REPO_NAME/contents/.php-cs-fixer.dist.php?ref=$PR_HEAD_SHA" \
-              > a/.php-cs-fixer.dist.php || rm a/.php-cs-fixer.dist.php &
-
-          gh api --paginate "/repos/$REPO_OWNER/$REPO_NAME/pulls/$PR_NUMBER/files" \
-            | jq -c '.[] | select(.status != "removed") | {filename, sha}' \
-            | while read -r FILE_OBJ; do
-              FILENAME=$(echo "$FILE_OBJ" | jq -r '.filename')
-              FILE_SHA=$(echo "$FILE_OBJ" | jq -r '.sha')
-
+          gh api --paginate "/repos/$REPO/pulls/$PR/files" \
+            | jq -c '.[] | select(.status != "removed") | filename' \
+            | while read -r FILENAME; do
               mkdir -p "a/$(dirname "$FILENAME")"
-              gh api -H "Accept: application/vnd.github.raw" \
-                "/repos/$REPO_OWNER/$REPO_NAME/git/blobs/$FILE_SHA" \
-                > "a/$FILENAME" &
+              cp -a {o,a}/"$FILENAME"
             done
 
           wait
@@ -86,13 +82,12 @@ jobs:
       - name: Check for merge commits
         if: always()
         env:
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          REPO_OWNER: ${{ github.repository_owner }}
-          REPO_NAME: ${{ github.event.repository.name }}
+          REPO: ${{ github.repository_owner }}/${{ github.event.repository.name }}
+          PR: ${{ github.event.pull_request.number }}
         run: |
           # If a PR contains merge commits, fail the job
           gh api -H "Accept: application/vnd.github.v3+json" \
-            "/repos/$REPO_OWNER/$REPO_NAME/pulls/$PR_NUMBER/commits" \
+            "/repos/$REPO_OWNER/$REPO/pulls/$PR/commits" \
             | jq -r '.[].parents | length > 1' | grep true > /dev/null && {
               echo "::error::Merge commits are not allowed in pull requests."
               echo "Please rebase your branch."
@@ -242,6 +237,30 @@ jobs:
             diff -pru2 --no-dereference --color=always a/ b/ || true
             echo -e "EOF_PATCH\n \n"
             echo "Then commit the changes and push to your PR branch."
+            exit 1
+          fi
+
+      - name: Check file permissions
+        if: always()
+        run: |
+          # Check for executable files without a shebang or that are not recognized as executables
+          cd a
+          find -type f -perm /u+x,g+x,o+x | while read -r FILE_PATH; do
+            if head -n 1 "$FILE_PATH" 2>/dev/null | grep -q '^#!'; then
+              continue
+            fi
+            if file -b "$file_path" 2>/dev/null | grep -qi 'elf'; then
+              continue
+            fi
+            echo "$FILE_PATH" >> ../PROBLEM_FILES
+          done
+          cd ..
+
+          if [ -e PROBLEM_FILES ]; then
+            echo "::error::Found executable files without a shebang or that are not recognized as executables:"
+            echo -e "\n \n$(cat PROBLEM_FILES)\n \n"
+            echo "Remove executable permissions: 'chmod -x <file>' for each listed file."
+            rm PROBLEM_FILES
             exit 1
           fi
 
