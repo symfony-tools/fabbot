@@ -37,7 +37,7 @@ jobs:
           [ -e o/.php-cs-fixer.dist.php ] && cp -a {o,a}/.php-cs-fixer.dist.php
 
           gh api --paginate "/repos/$REPO/pulls/$PR/files" \
-            | jq -c '.[] | select(.status != "removed") | filename' \
+            | jq -rc '.[] | select(.status != "removed") | .filename' \
             | while read -r FILENAME; do
               mkdir -p "a/$(dirname "$FILENAME")"
               cp -a {o,a}/"$FILENAME"
