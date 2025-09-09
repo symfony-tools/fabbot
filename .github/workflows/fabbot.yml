@@ -119,7 +119,7 @@ jobs:
         run: |
           # @deprecated annotations should mention ${{ inputs.package }}
           rm -rf b && cp -a a b && cd b
-          find -name '*.php' \
+          find -name '*.php' -o -name '*.js' -o -name '*.ts' \
             | while read -r FILE; do
               sed -i -E 's/(@deprecated since )([0-9])/\1${{ inputs.package }} \2/' "$FILE"
             done
