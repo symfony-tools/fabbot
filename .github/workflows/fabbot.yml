@@ -79,6 +79,23 @@ jobs:
             exit 1
           fi
 
+      - name: Check for readonly classes
+        if: always()
+        run: |
+          # If a PR contains readonly classes, fail the job
+          rm -rf b && cp -a a b && cd b
+          sed -i 's/^\\(abstract \\|final \\)\\?readonly class/\\1class/' -- $(grep '^\\(abstract \\|final \\)\\?readonly class' src/ -rl)
+          cd ..
+
+          if ! diff -qr --no-dereference a/ b/ >/dev/null; then
+            echo "::error::Readonly classes should be replaced by readonly properties."
+            echo -e "\n \n git apply - <<'EOF_PATCH'"
+            diff -pru2 --no-dereference --color=always a/ b/ || true
+            echo -e "EOF_PATCH\n \n"
+            echo "Fix your classes then commit the changes and push to your PR branch."
+            exit 1
+          fi
+
       - name: Check for merge commits
         if: always()
         env:
