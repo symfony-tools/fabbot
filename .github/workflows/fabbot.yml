@@ -92,7 +92,7 @@ jobs:
             echo -e "\n \n git apply - <<'EOF_PATCH'"
             diff -pru2 --no-dereference --color=always a/ b/ || true
             echo -e "EOF_PATCH\n \n"
-            echo "Fix your classes then commit the changes and push to your PR branch."
+            echo "Move the readonly keyword to properties then commit the changes and push to your PR branch."
             exit 1
           fi
 
