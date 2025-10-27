@@ -84,7 +84,7 @@ jobs:
         run: |
           # If a PR contains readonly classes, fail the job
           rm -rf b && cp -a a b && cd b
-          sed -i 's/^\\(abstract \\|final \\)\\?readonly class/\\1class/' -- $(grep '^\\(abstract \\|final \\)\\?readonly class' src/ -rl)
+          sed -i 's/^\(abstract \|final \)\?readonly class/\1class/' -- $(grep '^\(abstract \|final \)\?readonly class' src/ -rl) || true
           cd ..
 
           if ! diff -qr --no-dereference a/ b/ >/dev/null; then
