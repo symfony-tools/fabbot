@@ -67,7 +67,7 @@ jobs:
         run: |
           # Run codespell
           rm -rf b && cp -a a b && cd b
-          codespell -L invokable --check-filenames -w --skip='composer.lock,pnpm-lock.yaml,*.xlf' || true
+          codespell -L invokable --check-filenames -w --skip='composer.lock,pnpm-lock.yaml,*.xlf,*/Symfony/Component/Intl/Resources/data/*' || true
           cd ..
 
           if ! diff -qr --no-dereference a/ b/ >/dev/null; then
