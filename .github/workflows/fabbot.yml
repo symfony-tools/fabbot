@@ -31,7 +31,7 @@ jobs:
         run: |
           # Install dependencies and select files to check
           pip install codespell &
-          composer global require -q friendsofphp/php-cs-fixer seld/jsonlint symfony/yaml vincentlanglet/twig-cs-fixer:^3 &
+          composer global require -q friendsofphp/php-cs-fixer:^3 seld/jsonlint symfony/yaml vincentlanglet/twig-cs-fixer:^3 &
 
           mkdir a
           [ -e o/.php-cs-fixer.dist.php ] && cp -a {o,a}/.php-cs-fixer.dist.php
