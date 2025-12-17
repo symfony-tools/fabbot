@@ -266,7 +266,7 @@ jobs:
             if head -n 1 "$FILE_PATH" 2>/dev/null | grep -q '^#!'; then
               continue
             fi
-            if file -b "$file_path" 2>/dev/null | grep -qi 'elf'; then
+            if file -b "$FILE_PATH" 2>/dev/null | grep -qi 'elf'; then
               continue
             fi
             echo "$FILE_PATH" >> ../PROBLEM_FILES
