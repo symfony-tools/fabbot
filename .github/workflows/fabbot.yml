@@ -31,10 +31,11 @@ jobs:
         run: |
           # Install dependencies and select files to check
           pip install codespell &
-          composer global require -q friendsofphp/php-cs-fixer seld/jsonlint symfony/yaml &
+          composer global require -q friendsofphp/php-cs-fixer seld/jsonlint symfony/yaml vincentlanglet/twig-cs-fixer:^3 &
 
           mkdir a
           [ -e o/.php-cs-fixer.dist.php ] && cp -a {o,a}/.php-cs-fixer.dist.php
+          [ -e o/.twig-cs-fixer.dist.php ] && cp -a {o,a}/.twig-cs-fixer.dist.php
 
           gh api --paginate "/repos/$REPO/pulls/$PR/files" \
             | jq -rc '.[] | select(.status != "removed") | .filename' \
@@ -45,7 +46,7 @@ jobs:
 
           wait
 
-      - name: Check code style
+      - name: Check PHP code style
         if: always()
         run: |
           # Run PHP-CS-Fixer
@@ -55,6 +56,23 @@ jobs:
 
           if ! diff -qr --no-dereference a/ b/ >/dev/null; then
             echo "::error::PHP-CS-Fixer found style issues. Please apply the patch below."
+            echo -e "\n \n git apply - <<'EOF_PATCH'"
+            diff -pru2 --no-dereference --color=always a/ b/ || true
+            echo -e "EOF_PATCH\n \n"
+            echo "Then commit the changes and push to your PR branch."
+            exit 1
+          fi
+
+      - name: Check Twig code style
+        if: always()
+        run: |
+          # Run Twig-CS-Fixer
+          cp -a a b && cd b
+          ~/.composer/vendor/bin/twig-cs-fixer fix --no-cache
+          cd ..
+
+          if ! diff -qr --no-dereference a/ b/ >/dev/null; then
+            echo "::error::Twig-CS-Fixer found style issues. Please apply the patch below."
             echo -e "\n \n git apply - <<'EOF_PATCH'"
             diff -pru2 --no-dereference --color=always a/ b/ || true
             echo -e "EOF_PATCH\n \n"
