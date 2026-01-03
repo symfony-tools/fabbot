@@ -67,7 +67,7 @@ jobs:
         if: always()
         run: |
           # Run Twig-CS-Fixer
-          cp -a a b && cd b
+          rm -rf b && cp -a a b && cd b
           ~/.composer/vendor/bin/twig-cs-fixer fix --no-cache
           cd ..
 
