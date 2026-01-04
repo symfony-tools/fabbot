@@ -64,7 +64,7 @@ jobs:
           fi
 
       - name: Check Twig code style
-        if: always()
+        if: always() && hashFiles('o/.twig-cs-fixer.dist.php') != ''
         run: |
           # Run Twig-CS-Fixer
           rm -rf b && cp -a a b && cd b
