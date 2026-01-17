@@ -129,6 +129,20 @@ jobs:
               exit 1
             } || true
 
+      - name: Check commit attribution
+        if: always()
+        env:
+          REPO: ${{ github.repository_owner }}/${{ github.event.repository.name }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          # Commits must be linked to a GitHub account
+          gh api --paginate "/repos/$REPO/pulls/$PR/commits" \
+            | jq -r '.[] | select(.author.login == null and (.commit.author.email | test("@users\\.noreply\\.github\\.com$") | not)) | "::error::Commit \(.sha[0:7]) uses email \(.commit.author.email), which is not linked to a GitHub account."' \
+            | grep "::error::" && {
+              echo "Please configure your git email to match your GitHub account."
+              exit 1
+            } || true
+
       - name: Check test-case methods
         if: always()
         run: |
