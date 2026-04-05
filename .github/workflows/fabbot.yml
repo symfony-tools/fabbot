@@ -36,6 +36,7 @@ jobs:
           mkdir a
           [ -e o/.php-cs-fixer.dist.php ] && cp -a {o,a}/.php-cs-fixer.dist.php
           [ -e o/.twig-cs-fixer.dist.php ] && cp -a {o,a}/.twig-cs-fixer.dist.php
+          [ -e o/.codespellrc ] && cp -a {o,a}/.codespellrc
 
           gh api --paginate "/repos/$REPO/pulls/$PR/files" \
             | jq -rc '.[] | select(.status != "removed") | .filename' \
