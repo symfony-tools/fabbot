@@ -10,6 +10,10 @@ on:
           required: false
           type: boolean
           default: false
+      check_test_return_type:
+          required: false
+          type: boolean
+          default: true
 
 env:
   GH_TOKEN: ${{ github.token }}
@@ -145,7 +149,7 @@ jobs:
             } || true
 
       - name: Check test-case methods
-        if: always()
+        if: always() && inputs.check_test_return_type
         run: |
           # Test method names should not have a return type
           rm -rf b && cp -a a b && cd b
