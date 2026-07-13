@@ -17,6 +17,7 @@ on:
 
 env:
   GH_TOKEN: ${{ github.token }}
+  PATCH_DIR: ${{ github.workspace }}/patches
 
 jobs:
   check:
@@ -37,7 +38,7 @@ jobs:
           pip install codespell &
           composer global require -q friendsofphp/php-cs-fixer:^3 seld/jsonlint symfony/yaml vincentlanglet/twig-cs-fixer:^3 &
 
-          mkdir a
+          mkdir a "$PATCH_DIR"
           [ -e o/.php-cs-fixer.dist.php ] && cp -a {o,a}/.php-cs-fixer.dist.php
           [ -e o/.twig-cs-fixer.dist.php ] && cp -a {o,a}/.twig-cs-fixer.dist.php
           [ -e o/.codespellrc ] && cp -a {o,a}/.codespellrc
@@ -60,6 +61,7 @@ jobs:
           cd ..
 
           if ! diff -qr --no-dereference a/ b/ >/dev/null; then
+            diff -pru2 --no-dereference a/ b/ > "$PATCH_DIR/php-cs-fixer.diff" || true
             echo "::error::PHP-CS-Fixer found style issues. Please apply the patch below."
             echo -e "\n \n git apply - <<'EOF_PATCH'"
             diff -pru2 --no-dereference --color=always a/ b/ || true
@@ -77,6 +79,7 @@ jobs:
           cd ..
 
           if ! diff -qr --no-dereference a/ b/ >/dev/null; then
+            diff -pru2 --no-dereference a/ b/ > "$PATCH_DIR/twig-cs-fixer.diff" || true
             echo "::error::Twig-CS-Fixer found style issues. Please apply the patch below."
             echo -e "\n \n git apply - <<'EOF_PATCH'"
             diff -pru2 --no-dereference --color=always a/ b/ || true
@@ -94,6 +97,7 @@ jobs:
           cd ..
 
           if ! diff -qr --no-dereference a/ b/ >/dev/null; then
+            diff -pru2 --no-dereference a/ b/ > "$PATCH_DIR/codespell.diff" || true
             echo "::error::PHP-CS-Fixer found typos. Please apply the patch below."
             echo -e "\n \n git apply - <<'EOF_PATCH'"
             diff -pru2 --no-dereference --color=always a/ b/ || true
@@ -111,6 +115,7 @@ jobs:
           cd ..
 
           if ! diff -qr --no-dereference a/ b/ >/dev/null; then
+            diff -pru2 --no-dereference a/ b/ > "$PATCH_DIR/readonly-classes.diff" || true
             echo "::error::Readonly classes should be replaced by readonly properties."
             echo -e "\n \n git apply - <<'EOF_PATCH'"
             diff -pru2 --no-dereference --color=always a/ b/ || true
@@ -160,6 +165,7 @@ jobs:
           cd ..
 
           if ! diff -qr --no-dereference a/ b/ >/dev/null; then
+            diff -pru2 --no-dereference a/ b/ > "$PATCH_DIR/test-case-methods.diff" || true
             echo "::error::Test case methods should not have a return type. Please apply the patch below."
             echo -e "\n \n git apply - <<'EOF_PATCH'"
             diff -pru2 --no-dereference --color=always a/ b/ || true
@@ -180,6 +186,7 @@ jobs:
           cd ..
 
           if ! diff -qr --no-dereference a/ b/ >/dev/null; then
+            diff -pru2 --no-dereference a/ b/ > "$PATCH_DIR/deprecated-annotations.diff" || true
             echo "::error::@deprecated annotations should mention ${{ inputs.package }}. Please apply the patch below."
             echo -e "\n \n git apply - <<'EOF_PATCH'"
             diff -pru2 --no-dereference --color=always a/ b/ || true
@@ -286,6 +293,7 @@ jobs:
           cd ..
 
           if ! diff -qr --no-dereference a/ b/ >/dev/null; then
+            diff -pru2 --no-dereference a/ b/ > "$PATCH_DIR/exception-messages.diff" || true
             echo "::error::Some exception messages might need a tweak. Please consider the patch below."
             echo -e "\n \n git apply - <<'EOF_PATCH'"
             diff -pru2 --no-dereference --color=always a/ b/ || true
@@ -317,6 +325,23 @@ jobs:
             rm PROBLEM_FILES
             exit 1
           fi
+
+      - name: Upload the patches
+        id: patches
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fabbot-patch
+          path: ${{ env.PATCH_DIR }}/*.diff
+          if-no-files-found: ignore
+          retention-days: 5
+
+      - name: Explain how to apply the patches
+        if: always() && steps.patches.outputs.artifact-id != ''
+        run: |
+          # Point to the patches instead of making people select them from the logs
+          echo "::notice::Instead of copy/pasting the patches above, you can download and apply them all at once:"
+          echo -e "\n \n gh run download ${{ github.run_id }} -R ${{ github.repository }} -n fabbot-patch -D fabbot-patch && git apply -v fabbot-patch/*.diff\n \n"
 
       - name: 🧠 Fabbot can generate false-positives. Cherry-pick as fits 🍒. Reviewers will help.
         if: always()
