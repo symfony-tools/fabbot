@@ -66,6 +66,8 @@ jobs:
             echo -e "\n \n git apply - <<'EOF_PATCH'"
             diff -pru2 --no-dereference --color=always a/ b/ || true
             echo -e "EOF_PATCH\n \n"
+            echo "::notice::Or download and apply this patch alone, without selecting it from the logs:"
+            echo -e "\n \n gh api \"\$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts?name=fabbot-patch-php-cs-fixer --jq '.artifacts[0].archive_download_url')\" | funzip | git apply -v -\n \n"
             echo "Then commit the changes and push to your PR branch."
             exit 1
           fi
@@ -84,6 +86,8 @@ jobs:
             echo -e "\n \n git apply - <<'EOF_PATCH'"
             diff -pru2 --no-dereference --color=always a/ b/ || true
             echo -e "EOF_PATCH\n \n"
+            echo "::notice::Or download and apply this patch alone, without selecting it from the logs:"
+            echo -e "\n \n gh api \"\$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts?name=fabbot-patch-twig-cs-fixer --jq '.artifacts[0].archive_download_url')\" | funzip | git apply -v -\n \n"
             echo "Then commit the changes and push to your PR branch."
             exit 1
           fi
@@ -102,6 +106,8 @@ jobs:
             echo -e "\n \n git apply - <<'EOF_PATCH'"
             diff -pru2 --no-dereference --color=always a/ b/ || true
             echo -e "EOF_PATCH\n \n"
+            echo "::notice::Or download and apply this patch alone, without selecting it from the logs:"
+            echo -e "\n \n gh api \"\$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts?name=fabbot-patch-codespell --jq '.artifacts[0].archive_download_url')\" | funzip | git apply -v -\n \n"
             echo "Then commit the changes and push to your PR branch."
             exit 1
           fi
@@ -120,6 +126,8 @@ jobs:
             echo -e "\n \n git apply - <<'EOF_PATCH'"
             diff -pru2 --no-dereference --color=always a/ b/ || true
             echo -e "EOF_PATCH\n \n"
+            echo "::notice::Or download and apply this patch alone, without selecting it from the logs:"
+            echo -e "\n \n gh api \"\$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts?name=fabbot-patch-readonly-classes --jq '.artifacts[0].archive_download_url')\" | funzip | git apply -v -\n \n"
             echo "Move the readonly keyword to properties then commit the changes and push to your PR branch."
             exit 1
           fi
@@ -170,6 +178,8 @@ jobs:
             echo -e "\n \n git apply - <<'EOF_PATCH'"
             diff -pru2 --no-dereference --color=always a/ b/ || true
             echo -e "EOF_PATCH\n \n"
+            echo "::notice::Or download and apply this patch alone, without selecting it from the logs:"
+            echo -e "\n \n gh api \"\$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts?name=fabbot-patch-test-case-methods --jq '.artifacts[0].archive_download_url')\" | funzip | git apply -v -\n \n"
             echo "Then commit the changes and push to your PR branch."
             exit 1
           fi
@@ -191,6 +201,8 @@ jobs:
             echo -e "\n \n git apply - <<'EOF_PATCH'"
             diff -pru2 --no-dereference --color=always a/ b/ || true
             echo -e "EOF_PATCH\n \n"
+            echo "::notice::Or download and apply this patch alone, without selecting it from the logs:"
+            echo -e "\n \n gh api \"\$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts?name=fabbot-patch-deprecated-annotations --jq '.artifacts[0].archive_download_url')\" | funzip | git apply -v -\n \n"
             echo "Then commit the changes and push to your PR branch."
             exit 1
           fi
@@ -298,6 +310,8 @@ jobs:
             echo -e "\n \n git apply - <<'EOF_PATCH'"
             diff -pru2 --no-dereference --color=always a/ b/ || true
             echo -e "EOF_PATCH\n \n"
+            echo "::notice::Or download and apply this patch alone, without selecting it from the logs:"
+            echo -e "\n \n gh api \"\$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts?name=fabbot-patch-exception-messages --jq '.artifacts[0].archive_download_url')\" | funzip | git apply -v -\n \n"
             echo "Then commit the changes and push to your PR branch."
             exit 1
           fi
@@ -327,7 +341,6 @@ jobs:
           fi
 
       - name: Upload the PHP code style patch
-        id: patch-php-cs-fixer
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -337,7 +350,6 @@ jobs:
           retention-days: 5
 
       - name: Upload the Twig code style patch
-        id: patch-twig-cs-fixer
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -347,7 +359,6 @@ jobs:
           retention-days: 5
 
       - name: Upload the typos patch
-        id: patch-codespell
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -357,7 +368,6 @@ jobs:
           retention-days: 5
 
       - name: Upload the readonly classes patch
-        id: patch-readonly-classes
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -367,7 +377,6 @@ jobs:
           retention-days: 5
 
       - name: Upload the test-case methods patch
-        id: patch-test-case-methods
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -377,7 +386,6 @@ jobs:
           retention-days: 5
 
       - name: Upload the @deprecated annotations patch
-        id: patch-deprecated-annotations
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -387,7 +395,6 @@ jobs:
           retention-days: 5
 
       - name: Upload the exception messages patch
-        id: patch-exception-messages
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -395,24 +402,6 @@ jobs:
           path: ${{ env.PATCH_DIR }}/exception-messages.diff
           if-no-files-found: ignore
           retention-days: 5
-
-      - name: Explain how to apply the patches
-        if: always()
-        run: |
-          # One command per check, so that patches can still be cherry-picked one by one
-          patch_command() {
-            [ -n "$2" ] || return 0
-            echo "::notice::Instead of copy/pasting the $1 patch above, you can download and apply it with:"
-            echo -e "\n \n gh api repos/${{ github.repository }}/actions/artifacts/$2/zip | funzip | git apply -v -\n \n"
-          }
-
-          patch_command 'PHP code style' '${{ steps.patch-php-cs-fixer.outputs.artifact-id }}'
-          patch_command 'Twig code style' '${{ steps.patch-twig-cs-fixer.outputs.artifact-id }}'
-          patch_command 'typos' '${{ steps.patch-codespell.outputs.artifact-id }}'
-          patch_command 'readonly classes' '${{ steps.patch-readonly-classes.outputs.artifact-id }}'
-          patch_command 'test-case methods' '${{ steps.patch-test-case-methods.outputs.artifact-id }}'
-          patch_command '@deprecated annotations' '${{ steps.patch-deprecated-annotations.outputs.artifact-id }}'
-          patch_command 'exception messages' '${{ steps.patch-exception-messages.outputs.artifact-id }}'
 
       - name: 🧠 Fabbot can generate false-positives. Cherry-pick as fits 🍒. Reviewers will help.
         if: always()
