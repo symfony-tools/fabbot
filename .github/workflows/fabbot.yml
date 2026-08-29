@@ -326,22 +326,93 @@ jobs:
             exit 1
           fi
 
-      - name: Upload the patches
-        id: patches
+      - name: Upload the PHP code style patch
+        id: patch-php-cs-fixer
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: fabbot-patch
-          path: ${{ env.PATCH_DIR }}/*.diff
+          name: fabbot-patch-php-cs-fixer
+          path: ${{ env.PATCH_DIR }}/php-cs-fixer.diff
+          if-no-files-found: ignore
+          retention-days: 5
+
+      - name: Upload the Twig code style patch
+        id: patch-twig-cs-fixer
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fabbot-patch-twig-cs-fixer
+          path: ${{ env.PATCH_DIR }}/twig-cs-fixer.diff
+          if-no-files-found: ignore
+          retention-days: 5
+
+      - name: Upload the typos patch
+        id: patch-codespell
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fabbot-patch-codespell
+          path: ${{ env.PATCH_DIR }}/codespell.diff
+          if-no-files-found: ignore
+          retention-days: 5
+
+      - name: Upload the readonly classes patch
+        id: patch-readonly-classes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fabbot-patch-readonly-classes
+          path: ${{ env.PATCH_DIR }}/readonly-classes.diff
+          if-no-files-found: ignore
+          retention-days: 5
+
+      - name: Upload the test-case methods patch
+        id: patch-test-case-methods
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fabbot-patch-test-case-methods
+          path: ${{ env.PATCH_DIR }}/test-case-methods.diff
+          if-no-files-found: ignore
+          retention-days: 5
+
+      - name: Upload the @deprecated annotations patch
+        id: patch-deprecated-annotations
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fabbot-patch-deprecated-annotations
+          path: ${{ env.PATCH_DIR }}/deprecated-annotations.diff
+          if-no-files-found: ignore
+          retention-days: 5
+
+      - name: Upload the exception messages patch
+        id: patch-exception-messages
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fabbot-patch-exception-messages
+          path: ${{ env.PATCH_DIR }}/exception-messages.diff
           if-no-files-found: ignore
           retention-days: 5
 
       - name: Explain how to apply the patches
-        if: always() && steps.patches.outputs.artifact-id != ''
+        if: always()
         run: |
-          # Point to the patches instead of making people select them from the logs
-          echo "::notice::Instead of copy/pasting the patches above, you can download and apply them all at once:"
-          echo -e "\n \n gh run download ${{ github.run_id }} -R ${{ github.repository }} -n fabbot-patch -D fabbot-patch && git apply -v fabbot-patch/*.diff\n \n"
+          # One command per check, so that patches can still be cherry-picked one by one
+          patch_command() {
+            [ -n "$2" ] || return 0
+            echo "::notice::Instead of copy/pasting the $1 patch above, you can download and apply it with:"
+            echo -e "\n \n gh api repos/${{ github.repository }}/actions/artifacts/$2/zip | funzip | git apply -v -\n \n"
+          }
+
+          patch_command 'PHP code style' '${{ steps.patch-php-cs-fixer.outputs.artifact-id }}'
+          patch_command 'Twig code style' '${{ steps.patch-twig-cs-fixer.outputs.artifact-id }}'
+          patch_command 'typos' '${{ steps.patch-codespell.outputs.artifact-id }}'
+          patch_command 'readonly classes' '${{ steps.patch-readonly-classes.outputs.artifact-id }}'
+          patch_command 'test-case methods' '${{ steps.patch-test-case-methods.outputs.artifact-id }}'
+          patch_command '@deprecated annotations' '${{ steps.patch-deprecated-annotations.outputs.artifact-id }}'
+          patch_command 'exception messages' '${{ steps.patch-exception-messages.outputs.artifact-id }}'
 
       - name: 🧠 Fabbot can generate false-positives. Cherry-pick as fits 🍒. Reviewers will help.
         if: always()
