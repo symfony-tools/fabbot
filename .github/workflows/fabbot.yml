@@ -17,6 +17,7 @@ on:
 
 env:
   GH_TOKEN: ${{ github.token }}
+  PATCH_DIR: ${{ github.workspace }}/patches
 
 jobs:
   check:
@@ -37,7 +38,7 @@ jobs:
           pip install codespell &
           composer global require -q friendsofphp/php-cs-fixer:^3 seld/jsonlint symfony/yaml vincentlanglet/twig-cs-fixer:^4 &
 
-          mkdir a
+          mkdir a "$PATCH_DIR"
           [ -e o/.php-cs-fixer.dist.php ] && cp -a {o,a}/.php-cs-fixer.dist.php
           [ -e o/.twig-cs-fixer.dist.php ] && cp -a {o,a}/.twig-cs-fixer.dist.php
           [ -e o/.codespellrc ] && cp -a {o,a}/.codespellrc
@@ -60,10 +61,13 @@ jobs:
           cd ..
 
           if ! diff -qr --no-dereference a/ b/ >/dev/null; then
+            diff -pru2 --no-dereference a/ b/ > "$PATCH_DIR/php-cs-fixer.diff" || true
             echo "::error::PHP-CS-Fixer found style issues. Please apply the patch below."
             echo -e "\n \n git apply - <<'EOF_PATCH'"
             diff -pru2 --no-dereference --color=always a/ b/ || true
             echo -e "EOF_PATCH\n \n"
+            echo "::notice::Or download and apply this patch alone, without selecting it from the logs:"
+            echo -e "\n \n gh api \"\$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts?name=fabbot-patch-php-cs-fixer --jq '.artifacts[0].archive_download_url')\" | funzip | git apply -v -\n \n"
             echo "Then commit the changes and push to your PR branch."
             exit 1
           fi
@@ -77,10 +81,13 @@ jobs:
           cd ..
 
           if ! diff -qr --no-dereference a/ b/ >/dev/null; then
+            diff -pru2 --no-dereference a/ b/ > "$PATCH_DIR/twig-cs-fixer.diff" || true
             echo "::error::Twig-CS-Fixer found style issues. Please apply the patch below."
             echo -e "\n \n git apply - <<'EOF_PATCH'"
             diff -pru2 --no-dereference --color=always a/ b/ || true
             echo -e "EOF_PATCH\n \n"
+            echo "::notice::Or download and apply this patch alone, without selecting it from the logs:"
+            echo -e "\n \n gh api \"\$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts?name=fabbot-patch-twig-cs-fixer --jq '.artifacts[0].archive_download_url')\" | funzip | git apply -v -\n \n"
             echo "Then commit the changes and push to your PR branch."
             exit 1
           fi
@@ -94,10 +101,13 @@ jobs:
           cd ..
 
           if ! diff -qr --no-dereference a/ b/ >/dev/null; then
+            diff -pru2 --no-dereference a/ b/ > "$PATCH_DIR/codespell.diff" || true
             echo "::error::PHP-CS-Fixer found typos. Please apply the patch below."
             echo -e "\n \n git apply - <<'EOF_PATCH'"
             diff -pru2 --no-dereference --color=always a/ b/ || true
             echo -e "EOF_PATCH\n \n"
+            echo "::notice::Or download and apply this patch alone, without selecting it from the logs:"
+            echo -e "\n \n gh api \"\$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts?name=fabbot-patch-codespell --jq '.artifacts[0].archive_download_url')\" | funzip | git apply -v -\n \n"
             echo "Then commit the changes and push to your PR branch."
             exit 1
           fi
@@ -111,10 +121,13 @@ jobs:
           cd ..
 
           if ! diff -qr --no-dereference a/ b/ >/dev/null; then
+            diff -pru2 --no-dereference a/ b/ > "$PATCH_DIR/readonly-classes.diff" || true
             echo "::error::Readonly classes should be replaced by readonly properties."
             echo -e "\n \n git apply - <<'EOF_PATCH'"
             diff -pru2 --no-dereference --color=always a/ b/ || true
             echo -e "EOF_PATCH\n \n"
+            echo "::notice::Or download and apply this patch alone, without selecting it from the logs:"
+            echo -e "\n \n gh api \"\$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts?name=fabbot-patch-readonly-classes --jq '.artifacts[0].archive_download_url')\" | funzip | git apply -v -\n \n"
             echo "Move the readonly keyword to properties then commit the changes and push to your PR branch."
             exit 1
           fi
@@ -160,10 +173,13 @@ jobs:
           cd ..
 
           if ! diff -qr --no-dereference a/ b/ >/dev/null; then
+            diff -pru2 --no-dereference a/ b/ > "$PATCH_DIR/test-case-methods.diff" || true
             echo "::error::Test case methods should not have a return type. Please apply the patch below."
             echo -e "\n \n git apply - <<'EOF_PATCH'"
             diff -pru2 --no-dereference --color=always a/ b/ || true
             echo -e "EOF_PATCH\n \n"
+            echo "::notice::Or download and apply this patch alone, without selecting it from the logs:"
+            echo -e "\n \n gh api \"\$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts?name=fabbot-patch-test-case-methods --jq '.artifacts[0].archive_download_url')\" | funzip | git apply -v -\n \n"
             echo "Then commit the changes and push to your PR branch."
             exit 1
           fi
@@ -180,10 +196,13 @@ jobs:
           cd ..
 
           if ! diff -qr --no-dereference a/ b/ >/dev/null; then
+            diff -pru2 --no-dereference a/ b/ > "$PATCH_DIR/deprecated-annotations.diff" || true
             echo "::error::@deprecated annotations should mention ${{ inputs.package }}. Please apply the patch below."
             echo -e "\n \n git apply - <<'EOF_PATCH'"
             diff -pru2 --no-dereference --color=always a/ b/ || true
             echo -e "EOF_PATCH\n \n"
+            echo "::notice::Or download and apply this patch alone, without selecting it from the logs:"
+            echo -e "\n \n gh api \"\$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts?name=fabbot-patch-deprecated-annotations --jq '.artifacts[0].archive_download_url')\" | funzip | git apply -v -\n \n"
             echo "Then commit the changes and push to your PR branch."
             exit 1
           fi
@@ -286,10 +305,13 @@ jobs:
           cd ..
 
           if ! diff -qr --no-dereference a/ b/ >/dev/null; then
+            diff -pru2 --no-dereference a/ b/ > "$PATCH_DIR/exception-messages.diff" || true
             echo "::error::Some exception messages might need a tweak. Please consider the patch below."
             echo -e "\n \n git apply - <<'EOF_PATCH'"
             diff -pru2 --no-dereference --color=always a/ b/ || true
             echo -e "EOF_PATCH\n \n"
+            echo "::notice::Or download and apply this patch alone, without selecting it from the logs:"
+            echo -e "\n \n gh api \"\$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts?name=fabbot-patch-exception-messages --jq '.artifacts[0].archive_download_url')\" | funzip | git apply -v -\n \n"
             echo "Then commit the changes and push to your PR branch."
             exit 1
           fi
@@ -317,6 +339,69 @@ jobs:
             rm PROBLEM_FILES
             exit 1
           fi
+
+      - name: Upload the PHP code style patch
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fabbot-patch-php-cs-fixer
+          path: ${{ env.PATCH_DIR }}/php-cs-fixer.diff
+          if-no-files-found: ignore
+          retention-days: 5
+
+      - name: Upload the Twig code style patch
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fabbot-patch-twig-cs-fixer
+          path: ${{ env.PATCH_DIR }}/twig-cs-fixer.diff
+          if-no-files-found: ignore
+          retention-days: 5
+
+      - name: Upload the typos patch
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fabbot-patch-codespell
+          path: ${{ env.PATCH_DIR }}/codespell.diff
+          if-no-files-found: ignore
+          retention-days: 5
+
+      - name: Upload the readonly classes patch
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fabbot-patch-readonly-classes
+          path: ${{ env.PATCH_DIR }}/readonly-classes.diff
+          if-no-files-found: ignore
+          retention-days: 5
+
+      - name: Upload the test-case methods patch
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fabbot-patch-test-case-methods
+          path: ${{ env.PATCH_DIR }}/test-case-methods.diff
+          if-no-files-found: ignore
+          retention-days: 5
+
+      - name: Upload the @deprecated annotations patch
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fabbot-patch-deprecated-annotations
+          path: ${{ env.PATCH_DIR }}/deprecated-annotations.diff
+          if-no-files-found: ignore
+          retention-days: 5
+
+      - name: Upload the exception messages patch
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fabbot-patch-exception-messages
+          path: ${{ env.PATCH_DIR }}/exception-messages.diff
+          if-no-files-found: ignore
+          retention-days: 5
 
       - name: 🧠 Fabbot can generate false-positives. Cherry-pick as fits 🍒. Reviewers will help.
         if: always()
