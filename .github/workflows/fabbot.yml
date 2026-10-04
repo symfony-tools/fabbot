@@ -250,16 +250,18 @@ jobs:
               $new = preg_replace_callback('{throw new ([^\(]+)\((.+?)\);}', function ($match) {
                 $contents = $match[2];
 
+                // "[^"]*+"(*SKIP)(*F) skips placeholders that are already enclosed in double-quotes
+
                 // %s::%s() -> "%s::%s()"
-                $contents = preg_replace('{(?<= )%s\:\:%s(\(\))?}', '"%s::%s()"', $contents);
+                $contents = preg_replace('{"[^"]*+"(*SKIP)(*F)|(?<= )%s\:\:%s(\(\))?}', '"%s::%s()"', $contents);
                 $contents = preg_replace('{\(\'%s\:\:%s(\(\))?}', '(\'"%s::%s()"', $contents);
 
                 // %s() -> "%s()"
-                $contents = preg_replace('{(?<= )%s(\(\))}', '"%s$1"', $contents);
+                $contents = preg_replace('{"[^"]*+"(*SKIP)(*F)|(?<= )%s(\(\))}', '"%s$1"', $contents);
                 $contents = preg_replace('{\(\'%s(\(\))}', '(\'"%s$1"', $contents);
 
                 // %s -> "%s" after a space
-                $contents = preg_replace('{(?<= )%s}', '"%s"', $contents);
+                $contents = preg_replace('{"[^"]*+"(*SKIP)(*F)|(?<= )%s}', '"%s"', $contents);
                 $contents = preg_replace('{\(\'%s}', '(\'"%s"', $contents);
 
                 return sprintf('throw new %s(%s);', $match[1], $contents);
